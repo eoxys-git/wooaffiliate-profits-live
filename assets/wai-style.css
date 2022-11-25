@@ -1,0 +1,214 @@
+.investor_profit_table td, .investor_profit_table th{
+    font-size: 12px;
+    padding: 5px;
+}
+.investor_profit_table thead th{
+    padding: 5px;
+    background: #cacaca;
+    border: 1px solid #000;
+    text-align: center;
+}
+.investor_profit_table tbody, .investor_profit_table td {
+    border: 1px solid #000;
+    text-align: center;
+}
+
+.potential_members_tabls td, .potential_members_tabls th{
+    font-size: 12px;
+    padding: 5px;
+}
+.potential_members_tabls thead th{
+    padding: 5px;
+    background: #cacaca;
+    border: 1px solid #000;
+    text-align: center;
+}
+.potential_members_tabls tbody, .potential_members_tabls td {
+    border: 1px solid #000;
+    text-align: center;
+}
+.potential_members_tabls td.data_time_column {
+    max-width: 80px;
+}
+
+.potential_members_tabls td.potential_action_column button {
+    padding: 3px;
+}
+.downline_table td, .downline_table th{
+    font-size: 12px;
+    padding: 5px;
+}
+.downline_table thead th{
+    padding: 5px;
+    background: #cacaca;
+    border: 1px solid #000;
+    text-align: center;
+}
+.downline_table tbody, .downline_table td {
+    border: 1px solid #000;
+    text-align: center;
+}
+.add_funds_outer_box {
+    text-align: right;
+    margin-bottom: 25px;
+}
+.withdrawal_request_list td, .withdrawal_request_list th{
+    font-size: 12px;
+    padding: 5px;
+}
+.withdrawal_request_list thead th{
+    padding: 5px;
+    background: #cacaca;
+    border: 1px solid #000;
+    text-align: center;
+}
+.withdrawal_request_list tbody, .withdrawal_request_list td {
+    border: 1px solid #000;
+    text-align: center;
+}
+.user_funds_list td, .user_funds_list th{
+    font-size: 12px;
+    padding: 5px;
+}
+.user_funds_list thead th{
+    padding: 5px;
+    background: #cacaca;
+    border: 1px solid #000;
+    text-align: center;
+}
+.user_funds_list tbody, .user_funds_list td {
+    border: 1px solid #000;
+    text-align: center;
+}
+.withdrawal_outer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.withdrawal_outer a{
+    padding: 10px !important;
+    margin: 0px !important;
+}
+.request_withdrawal_popup, .add_fund_popup{
+    display: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    background: #0000;
+}
+.request_withdrawal_inner .close_form, .add_fund_inner .close_form{
+    position: relative;
+    text-align: right;
+}
+.request_withdrawal_inner .close_form span.close_btn , .add_fund_inner .close_form span.close_btn {
+    padding: 5px;
+    background: #000;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+}
+.request_withdrawal_popup .request_withdrawal_inner , .add_fund_popup .add_fund_inner{
+    position: fixed;
+    width: 24%;
+    height: auto;
+    top: 45% !important;
+    padding: 20px;
+    background: #fff;
+    text-align: center;
+    box-shadow: #0000008a 0px 0px 20px 3px;
+}
+button#submit_withdrawal_request, button#submint_add_fund_amount {
+    padding: 10px;
+    margin-top: 10px !important;
+    background: #000;
+    color: #fff;
+    cursor: pointer;
+    margin: auto;
+    display: block;
+}
+form#withdrawal_request, form#add_fund {
+    margin-top: 10px;
+}
+form#withdrawal_request input#withdrawal_request_amount, form#add_fund input#add_fund_amount {
+    background: #cacaca;
+    padding: 10px;
+}
+form#bankwithdrawal_method, form#potential_member_form {
+    border: 1px solid #c0c0c0;
+    padding: 20px;
+}
+form#bankwithdrawal_method .form-group label, form#potential_member_form .form-group label{
+    width: 30%;
+    display: inline-block;
+}
+form#bankwithdrawal_method .form-group input, form#potential_member_form .form-group input  {
+    padding: 5px;
+}
+form.woocommerce-EditAccountForm.edit-account fieldset span#refLnk {
+    font-size: 20px;
+    display: block;
+}
+.potential_member_form .form-group.potential_note {
+    display: none;
+}
+.potential_member_form .form-group.potential_email_template {
+    display: none;
+}
+.potential-members-parent .form-group input, select,textarea {
+    padding: 8px;
+    border: 2px solid #dcdcdc;
+    width: 100% !important;
+}
+.potential_member_form .form-group {
+    margin-bottom: 15px;
+}
+div#pmpro_level-mmpu .pmpro_checkout-fields span.gateway_:after, div#pmpro_level-mmpu .pmpro_checkout-fields span.gateway_stripe:after {
+    content: "*";
+    color: red;
+    margin-left: -10px;
+}
+td.data_time_column{
+	
+}
+.required{
+    color: red;
+}
+.potential_members_tabls input[type="text"] {
+    border: 1px solid #dcdcdc;
+    padding: 5px;
+}
+.potential_members_tabls input[name="tbl_fname"] {
+    max-width: 110px;
+}
+.potential_members_tabls input[name="tbl_lname"] {
+    max-width: 110px;
+}
+.potential_members_tabls input[name="tbl_mobile"] {
+    max-width: 120px;
+}
+.potential_members_tabls input[name="edit_potential_entry"] {
+    width: 70px;
+    cursor: pointer;
+    background-color: #0f58a3;
+    padding: 6px 10px;
+    color: #fff;
+    border: 1px solid #0f58a3;
+    border-radius: 5px;
+}
+.potential_members_tabls .potential_action_column form {
+    margin-bottom: unset;
+}
+
+@media only screen and (max-width: 680px){
+    .withdrawal_outer{
+        flex-direction: column;
+    }
+    .form#bankwithdrawal_method .form-group label{
+        width: 80%;
+    }
+    .wai_table_outer.account_table{
+        overflow: scroll;
+    }
+}
