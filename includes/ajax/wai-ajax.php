@@ -259,9 +259,18 @@ function wai_add_fund(){
     $product_id = 8639;
     $_product = wc_get_product($product_id);
     if(!$_product){
-        echo json_encode(array('status'=>false,'message'=>'Product not found'));
+        echo json_encode(array('status'=>false,'message'=>'Sometimes went wrong.'));
         exit;
     } 
+    $funds_capability = add_funds_capability(get_current_user_id());
+    if($funds_capability['can_add_amount'] == true && $add_fund_amount > $funds_capability['amount'] && $funds_capability['amount'] != '-1'){
+        echo json_encode(array('status'=>false,'message'=>'You are unable to add more than $'.wai_number_format($funds_capability['amount']).' at your current membership level, please upgrade you account to add more funds')); 
+        exit;
+    }elseif($funds_capability['can_add_amount'] == false){
+        echo json_encode(array('status'=>false,'message'=>'You cannot add funds. Please upgrade your account.')); 
+        exit;
+    }
+
     WC()->cart->empty_cart();
     $cart_item_data = [];
     $cart_item_data['cart_type'] = array('cart_type'=>'funds','action'=>'add_funds','price'=>$add_fund_amount);
@@ -550,9 +559,8 @@ function send_potential_email(){
  //  		$mail_status = mail($email,"Potential Email",$potential_notes,$headers);
 	// 	mail($current_user_email,"Copy Potential Email",$potential_notes,$headers);
 	// }else{
-		$headers .= 'From: The Points Collection<support@thepointscollection.com>' . "\r\n";
-   		$headers .= "MIME-Version: 1.0\r\n";
-   		$headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+		$headers = wai_mail_header_filter();
+        $dynamic_template = wai_mail_content_filter($dynamic_template);
   		$mail_status = mail($email,"Potential Email",$dynamic_template,$headers);
 		mail($current_user_email,"Copy Potential Email",$dynamic_template,$headers);
 	// }

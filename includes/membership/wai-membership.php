@@ -105,6 +105,19 @@ function wai_custom_checkout_box(){
 	if(!$user_id || !is_user_logged_in()) return;	// If user logout
 	$available_funds = can_withdrawal_amount($user_id); // users available funds 
 
+	$checkout_level = $_GET['level'];
+	if(strpos($checkout_level,'+')){
+		$checkout_level = '';
+	}
+
+	$groupid = pmprommpu_get_group_for_level($checkout_level);		
+	if($groupid != 1) return;
+
+	$groups_levels = groups_levels_of_level($level_id);
+	$groups_levels = $groups_levels[$groupid];
+
+	if(!$groups_levels || empty($groups_levels)) return;
+
 	$user_active_membership = get_user_active_membership($user_id);
 	$active_level_ids = array_column($user_active_membership,'ID');
 	$access_ids = [1, 2, 3, 14, 15, 16];

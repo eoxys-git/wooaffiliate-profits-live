@@ -682,3 +682,49 @@ function wai_dd($value = ''){
     print_r($value);
     echo "</pre>";
 }
+
+// Add funds capability
+
+function add_funds_capability($user_id){
+    
+    if(!$user_id) return;
+    $invest_last_entry = get_wai_invest_last_entry($user_id)[0];
+
+    $last_user_amount = $invest_last_entry['user_amount'];
+    $last_invest_amount = $invest_last_entry['invest_amount'];
+    $total_bank_value = $last_user_amount;
+    if($last_invest_amount){
+        $total_bank_value = $total_bank_value+$last_invest_amount;
+    }
+
+    $total_bank_value = (int)$total_bank_value;
+    // $total_bank_value = 284.344;
+
+    $affiliate_levles_ids = active_levels_ids($user_id);
+    // $affiliate_levles_ids[0] = 1;
+    $can_add_amount = false;
+    $amount = 0;
+
+    if(in_array(3,$affiliate_levles_ids) || in_array(16,$affiliate_levles_ids)){
+        $can_add_amount = true;
+        $amount = '-1';
+    }elseif(in_array(2,$affiliate_levles_ids) || in_array(15,$affiliate_levles_ids)){
+        if($total_bank_value < 2500 ){
+            $can_add_amount = true;
+            $amount = (int)2500-$total_bank_value;
+        }else{
+            $can_add_amount = false;
+            $amount = 0;
+        }
+    }elseif(in_array(1,$affiliate_levles_ids) || in_array(14,$affiliate_levles_ids)){
+        if($total_bank_value < 1000 ){
+            $can_add_amount = true;
+            $amount = (int)1000-$total_bank_value;
+        }else{
+            $can_add_amount = false;
+            $amount = 0;
+        }
+    }
+
+    return array("can_add_amount" => $can_add_amount,"amount" => $amount);
+}

@@ -69,7 +69,7 @@ if($last_invest_amount){
         <span style="color:red">*</span> Funds added today will not show in Profit & Loss page until the next trading day.
         <br/> 
         <br/> 
-        <span style="color:red">*</span> Please note payments through stripe credit/debit card incur a 7 day delay whilst we wait for the funds to be released, payment via PayPal is received by us on the same day.
+        <span style="color:red">*</span> Please note payments through stripe credit/debit card incur a 3 day delay whilst we wait for the funds to be released, payment via PayPal is received by us on the same day.
     </h6>
 </div>
 <div class="wai_table_outer account_table">

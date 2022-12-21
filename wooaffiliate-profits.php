@@ -84,6 +84,7 @@ require_once WAP_PLUGIN_DIR.'admin/potential email-template/potential-email.php'
 // include classes
 require_once WAP_PLUGIN_DIR.'admin/class-inverstor-list.php';
 require_once WAP_PLUGIN_DIR.'admin/class-funded-trader-list.php';
+require_once WAP_PLUGIN_DIR.'admin/class-funded-account-summary.php';
 require_once WAP_PLUGIN_DIR.'admin/class-account-details.php';
 require_once WAP_PLUGIN_DIR.'admin/class-single-investor-transactions.php';
 require_once WAP_PLUGIN_DIR.'admin/class-investor-transactions.php';
@@ -91,6 +92,9 @@ require_once WAP_PLUGIN_DIR.'admin/class-withdrawal-requests-list.php';
 require_once WAP_PLUGIN_DIR.'admin/class-user-funds-transactions.php';
 require_once WAP_PLUGIN_DIR.'admin/class-member-summary.php';
 require_once WAP_PLUGIN_DIR.'admin/class-schedule-emails.php';
+
+require_once WAP_PLUGIN_DIR.'admin/affiliate-wp/wai-class-list-table.php';
+
 require_once WAP_PLUGIN_DIR.'includes/affilaite-wp/class-affilaite-wp.php';
 
 // Cron Jobs
@@ -299,6 +303,7 @@ function wooaffiliate_admin_menus(){
     // Admin menus
     $wai_table_hook = add_menu_page( 'Affiliate Invest Management','Affiliate Invest Management','manage_options', 'affiliate-invest-management','affiliate_invest_management','dashicons-chart-area',50);
 	$wai_schedule_hook = add_menu_page( 'Schedule Email','Schedule Email','manage_options', 'affiliate-schedule-email','affiliate_schedule_emails','dashicons-chart-area',50);
+    $wai_fronline_commission = add_menu_page( 'Affiliate Commission','Affiliate Commission','manage_options', 'affiliate-frontline-commission','affiliate_frontline_commission','dashicons-chart-area',50);
 	$wai_funded_trader_table_hook = add_menu_page( 'Funded Trader','Funded Trader','manage_options', 'funded-trader-management','funded_trader_management','dashicons-chart-area',50);
     $wai_invest_transactions_callback = add_submenu_page( 'affiliate-invest-management', 'Invest Transactions', 'Invest Transactions','manage_options', 'invest-transactions','wai_invest_transactions_callback');
     $wai_funds_transactions_callback = add_submenu_page( 'affiliate-invest-management', 'Funds Transactions', 'Funds Transactions','manage_options', 'funds-transactions','wai_funds_transactions_callback');
@@ -309,13 +314,16 @@ function wooaffiliate_admin_menus(){
 	add_submenu_page( 'affiliate-schedule-email', 'Add Schedule', 'Add Schedule','manage_options', 'add-schedule-email','wai_affiliate_add_schedule_callback');
 
     $wai_funded_trader_account_hook = add_submenu_page( 'funded-trader-management', 'Funded Trader Account', 'Funded Trader Account','manage_options', 'funded-trader-accounts','funded_trader_accounts_management');
+    $wai_funded_trader_account_summary_hook = add_submenu_page( 'funded-trader-management', 'Funded Trader Account Summary', 'Funded Trader Account Summary','manage_options', 'funded-trader-accounts-summary','funded_trader_accounts_management_summary');
 	
 	
 	// add_submenu_page( 'affiliate-invest-management','Withdrawal Request','Withdrawal Request', 'manage_option', 'withdrawal-requests');
     add_action( 'load-' . $wai_table_hook, 'wai_list_table_screen_options' );
+    add_action( 'load-' . $wai_fronline_commission, 'wai_fronline_commission_screen_options' );
     add_action( 'load-' . $wai_schedule_hook, 'wai_schedule_emails_table_screen_options' );
     add_action( 'load-' . $wai_funded_trader_table_hook, 'wai_funded_trader_screen_options' );
     add_action( 'load-' . $wai_funded_trader_account_hook, 'wai_funded_trader_screen_options' );
+    add_action( 'load-' . $wai_funded_trader_account_summary_hook, 'wai_funded_trader_screen_options' );
     add_action( 'load-' . $wai_invest_transactions_callback, 'wai_invest_transactions_callback_screen_options' );
     add_action( 'load-' . $wai_funds_transactions_callback, 'wai_funds_transactions_callback_screen_options' );
     add_action( 'load-' . $withdrawal_requests_list, 'withdrawal_requests_list_screen_options' );
@@ -338,6 +346,16 @@ function wai_list_table_screen_options() {
         'label'   => __( 'Members Per Page', 'wooaffiliate' ),
         'default' => 10,
         'option'  => 'wai_users_per_page',
+    );
+    add_screen_option( 'per_page', $arguments );
+}
+
+function wai_fronline_commission_screen_options() {
+    global $investor_list_table;
+    $arguments = array(
+        'label'   => __( 'Affiliate Per Page', 'wooaffiliate' ),
+        'default' => 10,
+        'option'  => 'wai_affiliate_per_page',
     );
     add_screen_option( 'per_page', $arguments );
 }
@@ -407,6 +425,14 @@ $list_table = new Schedule_email_list_table(); ?>
 			<?php  $list_table->display(); ?>	
 		</form>
 	</div>
+<?php }
+
+// Affiliate frontline commission
+function affiliate_frontline_commission(){ 
+    $affiliate_frontline_commission = new Wai_AffWP_Affiliates_Table(); ?>
+    <div class="wrap">
+        <?php $affiliate_frontline_commission->prepare_items(); ?>
+    </div>
 <?php }
 
 /**
@@ -761,6 +787,130 @@ function funded_trader_management(){
     <?php
 }
 
+
+/**
+ * 
+ * Plugin account summary page callback 
+ * @since 0.0.2
+ * */
+
+ function funded_trader_accounts_management_summary(){
+    ?>
+    <style>
+        form.submit_trader_data {
+            float: right;
+            display: flex;
+        }
+    </style>
+    <div class="wai_container" style="width:98%;margin: auto;">
+        <div class="wai_outer">            
+            <div class="wap_heading">
+                <h2><?php echo __('Funded Traders Account Summary'); ?></h2>
+            </div>
+            <div class="wap_content">
+                <div class="wap_trader_manage_table">
+                    <?php if($_GET['action'] == 'add'){ 
+                        echo admin_add_account_form();
+                    }elseif($_GET['user_id'] && $_GET['id']){ ?>
+                        <a class="button button-primary" href="<?php echo admin_url('/admin.php?page=funded-trader-management'); ?>"><i class="fa fa-arrow-left"></i> Back</a>
+                        <div class="funded_trader_list_table">
+                            <?php 
+                                new Trader_account_detials();
+                            ?>
+                        </div>
+                    <?php }else{ ?>
+                       
+                       
+                        <div class="Account_summary">
+                            <?php 
+                                new Account_summary();
+                            ?>
+                        </div>
+                    <?php } ?>
+                </div>
+            </div>
+            <script>
+                jQuery(document).ready(function(){
+                    jQuery(document).on('change','input.checked_all',function(){
+                        if(jQuery(this).is(":checked")){                            
+                            jQuery('input#checked_all').each(function(){
+                                jQuery(this).prop('checked',true).attr('checked','checked');
+                            });
+                            jQuery('input#user_id').each(function(){
+                                jQuery(this).prop('checked',true).attr('checked','checked');
+                            });                          
+                        }else{
+                            jQuery('input#checked_all').each(function(){
+                                jQuery(this).prop('checked',false).removeAttr('checked','checked');
+                            });
+                            jQuery('input#user_id').each(function(){
+                                jQuery(this).prop('checked',false).removeAttr('checked','checked');
+                            });
+                        }
+                    });
+                    document.querySelector(".invest_profit").addEventListener("keypress", function (evt) {
+                        // console.log(evt.which);
+                        if (evt.which != 8 && evt.which != 0 && evt.which != 45 && evt.which != 46 &&  evt.which < 48 || evt.which > 57)
+                        {
+                            evt.preventDefault();
+                        }
+                    });
+                });
+
+                function send_funded_trader_profit(){
+
+                    var pre_profit = jQuery('input#invest_profit').val();
+                    var invest_profit_date = jQuery('input#invest_profit_date').val();
+                    
+                    var users_ids = [];
+                    var account_ids = [];
+                    var users_invest_amount = [];
+
+                    var users_data = [];
+                    var invalid_ammount = false;
+
+                    jQuery('input#user_id:checked').each(function(){
+                        var user_id = jQuery(this).val();
+                        var account_id = jQuery(this).data('account_id');
+
+                        var invest_amount = jQuery(this).closest('tr').find('input#invest_amount').val();
+                        var total_amount = jQuery(this).closest('tr').find('input#total_amount').val();
+                        if(Number(invest_amount) > Number(total_amount)){
+                            invalid_ammount = true;
+                        }
+
+                        users_ids.push(user_id);
+                        account_ids.push(account_id);
+
+                        users_invest_amount.push(invest_amount);
+                        users_data.push({'user_id':user_id,'account_id':account_id,'users_invest_amount':invest_amount});
+
+                    });
+                    
+                    if(jQuery(users_ids).length != jQuery(account_ids).length){
+                        alert('Something went wrong with user\'s account. Please refresh the page.');
+                        return;
+                    }
+
+                    if(jQuery.isEmptyObject(users_ids)){
+                        alert('Please select atleast one investor');
+                        return;
+                    }
+
+                    console.log(users_data);
+
+                  
+                }
+            </script>
+            <style>
+                input#user_id{
+                    margin-left: 8px;
+                }
+            </style>
+        </div>
+    </div>
+    <?php
+}
 /**
  * 
  * Members Summary callback 
@@ -1737,9 +1887,7 @@ function wai_affiliate_add_schedule_callback(){
 		$schedule_email_content = $_POST['schedule_email_content'];
         $schedule_email_content = wai_mail_content_filter($schedule_email_content);
         $email_field_test = $_POST['email_field_test'];
-		$headers .= 'From: The Points Collection<support@thepointscollection.com>' . "\r\n";
-   		$headers .= "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+		$headers = wai_mail_header_filter();
   		$email_status = mail($email_field_test,"Schedule Email Test",$schedule_email_content,$headers);
 		if(empty($email_field_test)){
 			$message = 'Please enter email address';

@@ -117,9 +117,7 @@ function send_schedule_mails(){
                             $user_data = get_user_by('id', $user_id);
                             $user_id = $user_data->ID;
                             $user_email = $user_data->user_email;
-                            $headers .= 'From: The Points Collection<support@thepointscollection.com>' . "\r\n";
-                            $headers .= "MIME-Version: 1.0\r\n";
-                            $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+                            $headers = wai_mail_header_filter();
                             $email_content = wai_mail_content_filter($email_content);
                             $mail_status = mail($user_email,$schedule_title,$email_content,$headers);
                             if($mail_status){

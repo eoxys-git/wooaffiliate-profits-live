@@ -196,7 +196,7 @@ function set_current_user_perent_affiliate(){
         if(affwp_is_affiliate($perent_user_id) && $perent_affiliate_id && $current_affiliate_id && $perent_affiliate_id != $current_affiliate_id){
             $Affiliate_WP_Tracking->set_affiliate_id($perent_affiliate_id);
             if(affwp_is_affiliate($user_id)){
-                $redirect_to = home_url('/affiliate-area/');
+                $redirect_to = home_url('/members-area/');
             }else{
                 $redirect_to = home_url('/my-account/');
             }
@@ -205,7 +205,7 @@ function set_current_user_perent_affiliate(){
         if(affwp_is_affiliate($perent_user_id) && $perent_affiliate_id && !$current_affiliate_id){
             $Affiliate_WP_Tracking->set_affiliate_id($perent_affiliate_id);
             if(affwp_is_affiliate($user_id)){
-                $redirect_to = home_url('/affiliate-area/');
+                $redirect_to = home_url('/members-area/');
             }else{
                 $redirect_to = home_url('/my-account/');
             }
@@ -218,7 +218,7 @@ function set_current_user_perent_affiliate(){
         if($user_id == $affiliate_user_id){
             $Affiliate_WP_Tracking->set_affiliate_id();
             if(affwp_is_affiliate($user_id)){
-                $redirect_to = home_url('/affiliate-area/');
+                $redirect_to = home_url('/members-area/');
             }else{
                 $redirect_to = home_url('/my-account/');
             }
@@ -278,7 +278,7 @@ function wai_custom_membership_checkout( $user_id ) {
 
 function wai_login_redirect( $redirect_to,$redirect, $user ){
     if(affwp_is_affiliate($user->ID)){
-        $redirect_to = home_url('/affiliate-area/');
+        $redirect_to = home_url('/members-area/');
         return $redirect_to;
     }
     return $redirect_to;
@@ -287,7 +287,7 @@ add_filter( 'login_redirect', 'wai_login_redirect', 10, 3 );
 
 function wai_woo_login_redirect( $redirect_to, $user ){
     if(affwp_is_affiliate($user->ID)){
-        $redirect_to = home_url('/affiliate-area/');
+        $redirect_to = home_url('/members-area/');
         return $redirect_to;
     }
     return $redirect_to;

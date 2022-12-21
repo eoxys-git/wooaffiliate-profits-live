@@ -33,7 +33,7 @@ $user_funds_list = $paginated_data['data'];
         <span style="color:red">*</span> Funds added today will not show in Profit & Loss page until the next trading day.
         <br/>
         <br/>
-        <span style="color:red">*</span> Please note payments through stripe credit/debit card incur a 7 day delay whilst we wait for the funds to be released, payment via PayPal is received by us on the same day.
+        <span style="color:red">*</span> Please note payments through stripe credit/debit card incur a 3 day delay whilst we wait for the funds to be released, payment via PayPal is received by us on the same day.
     </h6>
 </div>
 <div class="wai_table_outer account_table">
@@ -114,11 +114,12 @@ $user_funds_list = $paginated_data['data'];
                 url:"<?php echo admin_url('admin-ajax.php'); ?>",
                 data:formdata,
                 success:function(response){
-                    if(response.message.state == true){
+                    if(response.status == true){
+                        window.location.replace('<?php echo home_url('/checkout/'); ?>');
+                    }else{
                         alert(response.message);
                         return;
                     }
-                    window.location.replace('<?php echo home_url('/checkout/'); ?>');
                 }
             });
         });

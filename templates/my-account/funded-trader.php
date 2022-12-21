@@ -7,7 +7,7 @@
  * */
 
 $user_id = get_current_user_id();
-
+$hide_submit = false;
 if(current_user_can('administrator') && $_GET['user_id']){
     $user_id = $_GET['user_id'];
     $hide_submit = true;
@@ -28,24 +28,25 @@ $total_trad_ac = count($trader_accounts);
 
 $user_active_membership = get_user_active_membership($user_id);
 $active_level_ids = array_column($user_active_membership,'ID');
-
-if(in_array(7,$active_level_ids)){
-    if($total_trad_ac < 1){ ?>
-        <div class="new_trader_account">
-            <button class="woocommerce-button button add_trader_account"><?php echo  __('Add Account'); ?></button>
-        </div>
-    <?php }
-}else if(in_array(8,$active_level_ids)){ 
-    if($total_trad_ac < 2){ ?>
-        <div class="new_trader_account">
-            <button class="woocommerce-button button add_trader_account"><?php echo  __('Add Account'); ?></button>
-        </div>
-    <?php }
-}else if(in_array(9,$active_level_ids)){ ?>
-        <div class="new_trader_account">
-            <button class="woocommerce-button button add_trader_account"><?php echo  __('Add Account'); ?></button>
-        </div>
-    <?php 
+if($hide_submit == false){
+    if(in_array(7,$active_level_ids)){
+        if($total_trad_ac < 1){ ?>
+            <div class="new_trader_account">
+                <button class="woocommerce-button button add_trader_account"><?php echo  __('Add Account'); ?></button>
+            </div>
+        <?php }
+    }else if(in_array(8,$active_level_ids)){ 
+        if($total_trad_ac < 2){ ?>
+            <div class="new_trader_account">
+                <button class="woocommerce-button button add_trader_account"><?php echo  __('Add Account'); ?></button>
+            </div>
+        <?php }
+    }else if(in_array(9,$active_level_ids)){ ?>
+            <div class="new_trader_account">
+                <button class="woocommerce-button button add_trader_account"><?php echo  __('Add Account'); ?></button>
+            </div>
+        <?php 
+    }
 }
 
 $renew_account = [];
@@ -76,35 +77,55 @@ foreach ($user_treder_accounts as $uta_key => $uta_value) {
         $unavailable[] = $account_id;
     }
 }
-
+if($hide_submit == false){
 ?>
-<br>
-<div class="notice_points">
-    <h6>
-    <?php if(count($need_to_buy) >= 2){ ?>
+    <br>
+    <div class="notice_points">
+        <h6>
+            <br /><span style="color:red"><U>IMPORTANT PLEASE READ CAREFULLY</U></span><br />
+            <br />Below you can see the status of your Funded Trader Account(s) and subject to your membership level and how many accounts you already have you will see an Add Account button to purchase additional accounts.<br />
+            <br />
+            To see the Profit/Loss on your account, click on the Account ID in the table below.<br />
+            <br />
+            There are several account status which are explained below.<br />
+            <br />
+            Pending EV = You will see this status when you purchase an account until we make the purchase of the Evaluation Account, we aim to purchase new Evaluation accounts within 2 working days which includes the Apex Setup.<br />
+            <br />
+            EV Trading = This status means your account has been purchased and setup and is trading. Trading profit/loss will be added to the account during the day following the account being traded.<br />
+            <br />
+            Pending PA = Once your Evanluation account has reached qualified status you are required to make your payment for the Performance Account of $85, which must be done within 48 hours (Apex rules), to convert your evaluation account into a live funded trader account. Trading profit/loss will not be added to the account in this status.<br />
+            <br />
+            PA Trading = After we receive your payment we will make payment for the PA Trading account to trigger this status which is $53,313. The trading account will restart at $50,000 and trading profit/loss will be added to the account daily and will be shown on your account record the following trading day.<br />
+            <br />
+            We now have 2 times per month when we can request drawdown of profits, 1st - 5th & 15th - 20th of each month with payment of profits being paid on 15th & 30th respectively.<br />
+            <br />
+            On the same day we request drawdown of profits we will email you and advise you how much of the profits are for each of your $50,000 accounts. If you have a Crowd Funded membership we will transfer these profits into your CF trading bank, if you do not have a CF membership please provide us with the PayPal, Payoneer, Wise or bank account details so we may transfer the profits to you.<br />
+            <br />
+        <?php if(count($need_to_buy) >= 2){ ?>
+                <span style="color:red">*</span>
+                One of more of your Evaluation accounts has now reached qualified status, please click the Buy Now link to purchase your PA Account. Each PA account costs $85 to purchase and setup, with an ongoing subscription fee of $85 every 28 days.<br><br>
+                Payment for PA accounts must be made within 24 hours of your email notification that your account has qualified.
+                <br>
+        <?php }elseif($need_to_buy){ ?>
             <span style="color:red">*</span>
-            One of more of your Evaluation accounts has now reached qualified status, please click the Buy Now link to purchase your PA Account. Each PA account costs $85 to purchase and setup, with an ongoing subscription fee of $85 every 28 days.<br><br>
-            Payment for PA accounts must be made within 24 hours of your email notification that your account has qualified.
-            <br>
-    <?php }elseif($need_to_buy){ ?>
-        <span style="color:red">*</span>
-            Your Evaluation accounts has now reached qualified status, please click the Buy Now link to purchase your PA Account. Each PA account costs $85 to purchase and setup, with an ongoing subscription fee of $85 every 28 days.<br><br>
-            Payment for PA accounts must be made within 24 hours of your email notification that your account has qualified.
-            <br>
-    <?php } ?>
-    </h6>
-    <h6>
-    <?php if(count($renew_account) >= 2){ ?>
+                Your Evaluation accounts has now reached qualified status, please click the Buy Now link to purchase your PA Account. Each PA account costs $85 to purchase and setup, with an ongoing subscription fee of $85 every 28 days.<br><br>
+                Payment for PA accounts must be made within 24 hours of your email notification that your account has qualified.
+                <br>
+        <?php } ?>
+        </h6>
+        <h6>
+        <?php if(count($renew_account) >= 2){ ?>
+                <span style="color:red">*</span>
+                One of more of your Evaluation accounts subscription are expired, please click the Renew link to active your PA Account.
+                <br>
+        <?php }elseif($renew_account){ ?>
             <span style="color:red">*</span>
-            One of more of your Evaluation accounts subscription are expired, please click the Renew link to active your PA Account.
-            <br>
-    <?php }elseif($renew_account){ ?>
-        <span style="color:red">*</span>
-           Your Evaluation accounts subscription is expired, please click the Renew link to active your PA Account.
-            <br>
-    <?php } ?>
-    </h6>
-</div>
+            Your Evaluation accounts subscription is expired, please click the Renew link to active your PA Account.
+                <br>
+        <?php } ?>
+        </h6>
+    </div>
+<?php } ?>
 <div class="wai_table_outer account_table">
     <table class="investor_profit_table">
         <thead>
@@ -161,7 +182,11 @@ foreach ($user_treder_accounts as $uta_key => $uta_value) {
                     $account_age = account_age($user_id,$account_id,$uta__status);
                     ?>
                     <tr>
-                        <td><a href="<?php echo home_url('/my-account/funded-trader/?id='.$uta_value['account_id']); ?>">#<?php echo $uta_value['account_id']; ?></a></td>
+                        <?php if(current_user_can('administrator') && $_GET['user_id']){ ?>
+                            <td><a href="<?php echo home_url('/my-account/funded-trader/?user_id='.$_GET['user_id'].'&id='.$uta_value['account_id']); ?>">#<?php echo $uta_value['account_id']; ?></a></td>
+                        <?php }else{ ?>
+                            <td><a href="<?php echo home_url('/my-account/funded-trader/?id='.$uta_value['account_id']); ?>">#<?php echo $uta_value['account_id']; ?></a></td>
+                        <?php } ?>
                         <td><?php echo strtoupper(str_replace('_',' ',$uta_value['status'])); ?></td>
                         <td><?php echo $trading_days; ?></td>
                         <td><?php echo wai_number_with_currency($uta_value['user_amount']); ?></td>

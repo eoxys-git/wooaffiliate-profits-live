@@ -400,15 +400,15 @@ function send_trader_mails($user_id, $account_id ,$mail_event){
     $wai_mails_events = (is_array($wai_mails_events))?$wai_mails_events:[];
     $mail_content = $wai_mails_events[$mail_event];
 
-    $headers = 'From: The Points Collection <'.$admin_email.">\r\n";
-	$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+    $headers = wai_mail_header_filter();
 
     // set dynamic tags values
 	$message = str_replace( '{*display_name*}', $display_name, $mail_content );
 	$message = str_replace( '{*user_id*}', $user_id, $message );
 	$message = str_replace( '{*account_no*}', $account_id, $message );
-	$message = stripslashes($message);
+	
 	$message = wai_mail_content_filter($message);
+	
 	$subject = "Funded Trader Account";
 	
 	$is_notified = get_user_meta($user_id,'is_notified_'.$mail_event.'_'.$account_id,true);

@@ -37,6 +37,13 @@ $withdrawal_request_list = $paginated_data['data'];
 </div>
 <div class="notice_points">
     <h6>
+        <span style="color:red"><strong><u>IMPORTANT</u> (Not to be used for Commission Payment Requests</strong></span>&nbsp;
+        <br />
+        <span style="color:red"><strong>Please take care to read and understand everything below.</strong></span>&nbsp;
+        <br />
+        <span style="color:red"><strong>To make a request for a commission payment please visit the <a href="https://thepointscollection.com/commission-request-form/">commission request page</a>.</strong></span>&nbsp;
+        <br />
+        <br />
         <span style="color:red">*</span>&nbsp;
         There is a minimum withdrawal amount of $100
         <br/>
@@ -50,7 +57,11 @@ $withdrawal_request_list = $paginated_data['data'];
         <br/>
         <br/>
         <span style="color:red">*</span>&nbsp;
-        The admin charge per withdrawal is $15 to PayPal, Wise, Revolut or Payoneer and all other accounts.<br><br>
+        All transfer charges are bourne by you.
+        <br/>
+        <br/>
+        <span style="color:red">*</span>&nbsp;
+        The admin charge per withdrawal is $15, this will be deducted from your trading bank for PayPal, Wise, Revolut or Payoneer and all other accounts, all have different charges, these charges are bourne by you, we send the sum you request you may recieve a lesser net sum after your chosen company deduc their charges.<br><br>
         <u>Please Note:</u> If you ask for a withdrawal of $500 your Profit & Loss account will show a reduced trading bank of $515 to allow for the admin fee.
         <br />
         <br />

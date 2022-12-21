@@ -124,3 +124,47 @@ function affwp_email_tag_member_level_amount(){
 }
 
 // End callbacks ----------------
+
+// Add custom fields on edit affilaite page
+function wai_custom_edit_affiliate_fields($affiliate){
+	$affiliate_id = $_GET['affiliate_id'];
+	if(!$affiliate_id) return;
+	$user_id = affwp_get_affiliate_user_id( $affiliate_id );
+	if(!$user_id) return;
+	$affiliateFrontlineCommission = get_user_meta($user_id,'_wai_frontline_commission',true);
+	?>
+	<tr class="form-row">
+
+		<th scope="row">
+			<label for="frontline_commission"><?php _e( 'Frontline commission (%)', 'affiliate-wp' ); ?></label>
+		</th>
+
+		<td>
+			<input class="regular-text" type="number" name="frontline_commission" id="frontline_commission" step="0.01" min="0" max="999999999" placeholder="" value="<?php echo esc_attr( $affiliateFrontlineCommission ); ?>"/>
+			<p class="description"><?php _e( 'If left blank, the default level based commission will be used.', 'affiliate-wp' ); ?></p>
+		</td>
+
+	</tr>
+	<?php
+}
+add_action('affwp_edit_affiliate_end','wai_custom_edit_affiliate_fields',10,3);
+
+// Update custom fields on edit affilaite page
+function wai_custom_update_affiliate_fields($data = array()){
+	if ( empty( $data['affiliate_id'] ) ) return false;
+
+	if ( ! is_admin() ) return false;
+
+	if ( ! current_user_can( 'manage_affiliates' ) ) {
+		wp_die( __( 'You do not have permission to manage affiliates', 'affiliate-wp' ) );
+	}
+
+	$affiliate_id = absint( $data['affiliate_id'] );
+	if(!$affiliate_id) return;
+	$user_id = affwp_get_affiliate_user_id( $affiliate_id );
+	if(!$user_id) return;
+
+	$frontline_commission = $data['frontline_commission'];
+	update_user_meta($user_id,'_wai_frontline_commission',$frontline_commission);
+}
+add_action('affwp_update_affiliate','wai_custom_update_affiliate_fields',5,1);

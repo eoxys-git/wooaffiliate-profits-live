@@ -498,8 +498,7 @@ function send_member_mail($user_id,$withdrawal_amount,$status,$level_id = 0){
 
 	$admin_email = get_option('admin_email');
 
-	$headers = 'From: The Points Collection <'.$admin_email.">\r\n";
-	$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+	$headers = wai_mail_header_filter();
 
 	// Mail Dynamic Content
 
@@ -533,6 +532,7 @@ function send_member_mail($user_id,$withdrawal_amount,$status,$level_id = 0){
 		$message = str_replace( '{*level_id*}', $level_id, $message );
 		$message = str_replace( '{*level_name*}', $level_name, $message );
 	}elseif($status){
+
 		$subject = 'Withdrawal Request '.ucfirst($status);
 
 		$members_mail_content = $mail_contents['members_'.$status]; // status mail content
@@ -543,8 +543,8 @@ function send_member_mail($user_id,$withdrawal_amount,$status,$level_id = 0){
 		$message = str_replace( '{*withdrawal_amount*}', wai_number_with_currency($withdrawal_amount), $message );
 	}
 
-	$message = stripslashes($message);
 	$message = wai_mail_content_filter($message);
+	$subject = wai_mail_subject_filter($subject);
 	// $user_mail = 'ewttest2016@gmail.com';
 	if($user_mail && $admin_email && $subject && $message && $headers){
 		$admin_receiver = wai_receiver_admin_mail();
@@ -575,8 +575,7 @@ function send_admin_mail($user_id,$withdrawal_amount,$status,$level_id = 0){
 
 	$mail_status = $status;
 
-	$headers = "From: The Points Collection <support@thepointscollection.com>\r\n";
-	$headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+	$headers = wai_mail_header_filter();
 	
 	$mail_contents = get_option('withdrawal_mail_settings');
 
@@ -622,8 +621,8 @@ function send_admin_mail($user_id,$withdrawal_amount,$status,$level_id = 0){
 		$message = str_replace( '{*bic*}', $bic, $message );
 	}
 
-	$message = stripslashes($message);
 	$message = wai_mail_content_filter($message);
+	$subject = wai_mail_subject_filter($subject);
 	// $admin_email = 'ewttest2016@gmail.com';
 	if($admin_email && $subject && $message && $headers){
 		$mail_sent = mail($admin_email, $subject, $message, $headers);
@@ -745,6 +744,12 @@ function send_parents_commission($level, $user_id = 0, $reference_id = 0){
 		$commission_rate = 10;
 	}
 
+	$parent_affiliate_user_id = affwp_get_affiliate_user_id( $parent_affiliate_id );
+	$admin_frontline_commission = get_user_meta($parent_affiliate_user_id,'_wai_frontline_commission',true);
+	if($admin_frontline_commission){
+		$commission_rate = $admin_frontline_commission;
+	}
+
 	$product_amount = ($product_amount*$commission_rate)/100; // calculate referral amount
 
 	if($reference_id){
@@ -860,40 +865,25 @@ function send_levels_recurring_commission($recurring_amount, $user_id){
 	}
 }
 
-
 // Mail contetn filtre
+function wai_mail_content_filter($message = ''){
+	$message = html_entity_decode(stripslashes($message));
+	return $message;
+}
+// Mail header filtre
+function wai_mail_header_filter($header = ''){
+	$boundary = "_boundary_" . str_shuffle(md5(time()));
+	$headers = array(
+	    'From: The Points Collection <support@thepointscollection.com>',
+	    'MIME-Version: 1.0',
+	    'Content-type: multipart/alternative; boundary="' . $boundary . '"',
+	);	
+    $headers = implode("\r\n", $headers);;
+	return $headers;
+}
 
-function wai_mail_content_filter($contents){
-	ob_start();
-	?>
-	<table border="0" cellpadding="0" cellspacing="0" id="v1template_container">
-	   <tbody>
-	      <tr>
-	         <td align="center" valign="top">
-	            <table border="0" cellpadding="0" cellspacing="0" id="v1template_body">
-	               <tbody>
-	                  <tr>
-	                     <td valign="top" style="border-radius: 3px !important; font-family: 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif">
-	                        <table border="0" cellpadding="20" cellspacing="0" width="100%">
-	                           <tbody>
-	                              <tr>
-	                                 <td valign="top">
-	                                    <div style="color: #000000;white-space: pre-line; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande', sans-serif; line-height: 150%; text-align: left">
-	                                       <?php echo $contents; ?>
-	                                    </div>
-	                                 </td>
-	                              </tr>
-	                           </tbody>
-	                        </table>
-	                     </td>
-	                  </tr>
-	               </tbody>
-	            </table>
-	         </td>
-	      </tr>
-	   </tbody>
-	</table>
-	<?php
-	$contents = ob_get_clean();
-	return $contents;
+// Mail subject filtre
+function wai_mail_subject_filter($subject = ''){
+	$subject = "=?UTF-8?B?" . base64_encode($subject) . "?=";
+	return $subject;
 }
