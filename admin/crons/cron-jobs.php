@@ -7,13 +7,21 @@ function affiliate_add_day_schedule_email( $schedules ) {
             'interval'  => 86400,
             'display'   => __( 'Every Day', 'textdomain' )
     );
+    $schedules['every_1_hour'] = array(
+            'interval'  => 3600,
+            'display'   => __( 'Every Hour', 'textdomain' )
+    );
     return $schedules;
 }
 
 if ( ! wp_next_scheduled( 'affiliate_add_day_schedule_email' ) ) {
+    // One Day Hook
     wp_schedule_event( time(), 'every_1_day', 'affiliate_add_day_schedule_email' );
+    // One Hour Hook
+    wp_schedule_event( time(), 'every_1_hour', 'affiliate_add_hour_schedule_email' );
 }
 
+// One Day Callback
 add_action( 'affiliate_add_day_schedule_email', 'every_1_day_schedule_event_func' );
 function every_1_day_schedule_event_func() {
     global $woocommerce,$wpdb;
@@ -23,6 +31,15 @@ function every_1_day_schedule_event_func() {
 
     // Sending Schedule Mails
     send_schedule_mails();  
+}
+
+// One Hour Callback
+add_action( 'affiliate_add_hour_schedule_email', 'every_1_hour_schedule_event_func' );
+function every_1_hour_schedule_event_func() {
+    global $woocommerce,$wpdb;
+
+    // Sending Level Upgrade Reminder Mails
+    send_level_upgrade_notification();
 }
 
 // Sending Schedule Mails Funtions
@@ -117,8 +134,10 @@ function send_schedule_mails(){
                             $user_data = get_user_by('id', $user_id);
                             $user_id = $user_data->ID;
                             $user_email = $user_data->user_email;
+
                             $headers = wai_mail_header_filter();
                             $email_content = wai_mail_content_filter($email_content);
+
                             $mail_status = mail($user_email,$schedule_title,$email_content,$headers);
                             if($mail_status){
                                 update_user_meta($user_id,'pre_sent_date',$current_date);
@@ -174,4 +193,124 @@ function wai_subscription_reminder_cron_schedule(){
         }
         
     }
+}
+
+// Send level upgrade notification
+add_action('admin_head','send_level_upgrade_notification');
+function send_level_upgrade_notification(){
+
+    $wai_settings = get_option('wai_settings');
+    $is_hold_profit_enable = $wai_settings['is_hold_profit_enable'];
+    if($is_hold_profit_enable != 'on') return;
+    
+    $is_sent_upgrade_level_mail = get_option('upgrade_level_mail_for_'.date('Y_m_d'));     
+    $is_mail_send = false;
+    if(date('H') == 18 && $is_sent_upgrade_level_mail != 'sent'){
+        $is_mail_send = true;
+    }
+
+    global $wpdb;
+
+    $members_table = $wpdb->prefix.'pmpro_memberships_users';
+    $members_list = $wpdb->get_results("SELECT DISTINCT(user_id) FROM $members_table ",ARRAY_A);
+
+    if(!$members_list || !is_array($members_list)) return;
+
+    $upgrade_now_members = [];
+    $upgrade_soon_members = [];
+    foreach ($members_list as $key => $member) {
+        $user_id = $member['user_id'];
+        $levels_status = $member['status'];
+        $user_data = get_user_by('id', $user_id);
+        if(!$user_data) continue;
+        $user_email = $user_data->user_email;
+        $display_name = $user_data->display_name;
+        if(!$display_name){
+            $display_name = $user_data->user_login;
+        }
+        if(!$display_name){
+            $display_name = $user_data->user_email;
+        }
+
+        // if($levels_status != 'active'){
+        //     // make account hold for profit
+        //     update_user_meta($user_id,'profit_account_status','');
+        // }
+
+        $profit_loss_capability = add_profit_loss_capability($user_id);
+
+        if($profit_loss_capability['status'] == true || $profit_loss_capability['message'] == 'invalid_member') {
+            update_user_meta($user_id,'profit_account_status','');
+            continue;
+        }
+
+        // Get mail contents
+        $wai_mails_events = get_option('wai_dynamic_mails_content');
+        $wai_mails_events = (is_array($wai_mails_events))?$wai_mails_events:[];
+
+        if($profit_loss_capability['message'] == 'upgrade_now'){
+            $event_mail_content = $wai_mails_events['level_upgrade_now'];
+            $upgrade_now_members[] = array('user_id'=>$user_id,'display_name'=>$display_name); 
+
+            // make account hold for profit
+            update_user_meta($user_id,'profit_account_status','on-hold');
+
+        }elseif($profit_loss_capability['message'] == 'upgrade_soon'){
+            $event_mail_content = $wai_mails_events['level_upgrade_soon'];
+            $upgrade_soon_members[] = array('user_id'=>$user_id,'display_name'=>$display_name);
+        }
+
+        if($is_mail_send == true){
+            $event_mail_content = str_replace("{*user_id*}", $user_id, $event_mail_content);
+            $event_mail_content = str_replace("{*display_name*}", $display_name, $event_mail_content); 
+
+            // $user_email = "ewttest2016@gmail.com";
+            $mail_content = wai_mail_content_filter($event_mail_content);
+            $headers = wai_mail_header_filter();
+            $mail_status = wp_mail($user_email,"Level Upgrade Reminder",$mail_content,$headers);
+            update_option('upgrade_level_mail_for_'.date('Y_m_d'),'sent');
+        }
+    }
+
+    if($is_mail_send == true){
+        // Send mail to list of members
+        $admin_email = get_option('admin_email');
+        $admin_receiver = wai_receiver_admin_mail();
+        if($admin_receiver){
+            $admin_email = $admin_receiver;;
+        }
+        if($admin_email && $upgrade_now_members || $upgrade_soon_members){
+
+            $admin_mail_content = '';
+            $admin_mail_content .= '<h4>Members who need to upgrade level now</h4>';
+            if($upgrade_now_members && is_array($upgrade_now_members)){
+                $i = 1;
+                foreach ($upgrade_now_members as $key => $now_member) {
+                    $admin_mail_content .= '<p>'.$i.'. '.$now_member['display_name'].' (#'.$now_member['user_id'].')<p>';
+                $i++;
+                }
+            }else{
+                $admin_mail_content .= '<p>No members<p>';
+            }
+
+            $admin_mail_content .= '<br><br><h4>Members who need to upgrade level soon</h4>';
+            if($upgrade_soon_members && is_array($upgrade_soon_members)){
+                $u = 1;
+                foreach ($upgrade_soon_members as $key => $soon_member) {
+                    $admin_mail_content .= '<p>'.$u.'. '.$soon_member['display_name'].' (#'.$soon_member['user_id'].')<p>';
+                $u++;
+                }
+            }else{
+                $admin_mail_content .= '<p>No members<p>';
+            }
+
+            $admin_mail_content = wai_mail_content_filter($admin_mail_content);
+            $headers .= 'From: The Points Collection<support@thepointscollection.com>' . "\r\n";
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+            $mail_sub =  wai_mail_subject_filter("Levels upgrade members list");
+            $mail_status = wp_mail($admin_email,"Levels upgrade members list",$admin_mail_content,$headers);
+        }
+    }
+
 }

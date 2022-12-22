@@ -774,25 +774,31 @@ function send_parents_commission($level, $user_id = 0, $reference_id = 0){
 }
 
 // Send levels recurring commission
-function send_levels_recurring_commission($recurring_amount, $user_id){
+function send_levels_recurring_commission($recurring_amount, $user_id,$reference_id = ''){
 	if(!$recurring_amount || !$user_id) return;
 
 	$affiliate_id = affwp_get_affiliate_id( $user_id );
-	$parent_affiliate_id = affwp_mlm_get_parent_affiliate( $affiliate_id );	
+	$parent_affiliate_id = affwp_mlm_get_parent_affiliate( $affiliate_id );
 
 	// Commission settings
 	$wai_settings = get_option('wai_settings');
 
-	for ($i=1; $i <= 7 ; $i++) { 
+	for ($i=1; $i <= 7 ; $i++) {
 
+		// wai_dd($parent_affiliate_id);
 		if($i == 1){ // First Level Commission
 
 			if(!$parent_affiliate_id){
-				$parent_affiliate_id = affiliatewp_affiliate_info()->functions->get_affiliate_id();
+				$parent_affiliate_id = (int)get_user_meta($user_id,'perent_affiliate_id',true);
+			}
+
+			if(!$parent_affiliate_id){
+				break;
 			}
 
 			$dr_affiliate_commission = $wai_settings['dr_subs_first_level'];
 			$affiliate = affwp_get_affiliate($parent_affiliate_id);
+
 			if(!$affiliate) continue;
 			$affiliate_levles_ids = active_levels_ids($affiliate->user_id);
 
@@ -809,13 +815,13 @@ function send_levels_recurring_commission($recurring_amount, $user_id){
 			if(!$commission_rate){
 				$commission_rate = $dr_affiliate_commission['1'];
 			}
-
 			$product_amount = ($recurring_amount*$commission_rate)/100; // calculate referral amount
 
 		}else{
 
 			$dr_next_affiliate_commission = $wai_settings['dr_subs_next_level'];
 			$affiliate = affwp_get_affiliate($parent_affiliate_id);
+
 			if(!$affiliate) continue;
 			$affiliate_levles_ids = active_levels_ids($affiliate->user_id);
 
@@ -837,32 +843,44 @@ function send_levels_recurring_commission($recurring_amount, $user_id){
 
 		}
 
-		// wai_dd('Level '.$i.' => '.$affiliate->affiliate_id.' => User id => '.$affiliate->user_id.' => Amount => '.$product_amount);
-
 		if($affiliate->affiliate_id && $affiliate->user_id && $product_amount > 0){
 			
+			if($reference_id){
+				$reference_url = '<a href="'.home_url().'/wp-admin/admin.php?page=pmpro-orders&order='.$reference_id.'">'.$reference_id.'</a>'; 
+			}else{
+				$reference_url = "";
+			}
+			add_filter('affwp_notify_on_new_referral',false);
 			$data = array(
 				'affiliate_id' => absint( $affiliate->affiliate_id ),
-				'user_id' => absint( $affiliate->user_id ),
+				'reference' => $reference_url,
+				'context' => 'pmp',
+				'user_id' => absint( $user_id ),
 				'amount'       => $product_amount,
 				'description'  => 'Downline Commission',
 				'type'         => 'sale',
 				'status'       => 'unpaid',
 			);
 			$referral_id = affwp_add_referral( $data ); // create refferral for affiliate
+			if($referral_id){
+				send_downline_commission_mail($affiliate->affiliate_id,$product_amount);
+			}
 		}
 
-		// wai_dd($product_amount);
-		// wai_dd('Level '.$i.' => '.$parent_affiliate_id);
-
 		$parent_affiliate_id = affwp_mlm_get_parent_affiliate( $parent_affiliate_id );
-		$parent_affiliate_user_id = affwp_get_affiliate_user_id( $parent_affiliate_id );
+
 		if(!$parent_affiliate_id) {
+
+			$parent_affiliate_user_id = affwp_get_affiliate_user_id( $parent_affiliate_id );
+			$user_id = $parent_affiliate_user_id;
 			$parent_affiliate_id = (int)get_user_meta($parent_affiliate_user_id,'perent_affiliate_id',true);
+		
 		}
 
 		if(!$parent_affiliate_id) break;
 	}
+
+	// exit;
 }
 
 // Mail contetn filtre
@@ -886,4 +904,58 @@ function wai_mail_header_filter($header = ''){
 function wai_mail_subject_filter($subject = ''){
 	$subject = "=?UTF-8?B?" . base64_encode($subject) . "?=";
 	return $subject;
+}
+
+// Insert withdrawal request
+function wai_insert_withdrawal_request($user_id,$withdrawal_amount){
+	global $wpdb;
+	$table_name = $wpdb->prefix.'wai_withdrawal_request';
+	$wpdb->insert($table_name,
+        array(
+            'user_id' => $user_id,
+            'amount' => $withdrawal_amount,
+            'approve_amount' => '',
+            'status' => 'approve',
+            'notes' => '',
+            'data' => '',
+        )
+    );
+    if($wpdb->insert_id){
+    	return $wpdb->insert_id;
+    }
+}
+
+// Send mail for downline commission4
+function send_downline_commission_mail($affiliate_id,$amount){
+	if(!$affiliate_id || !$amount){
+		return;
+	}
+
+	$affiliate_user_id = affwp_get_affiliate_user_id( $affiliate_id );
+
+	$user = get_user_by('id',$affiliate_user_id);
+	if(!$user){
+		return;
+	}
+
+	$display_name =  $user->display_name;
+	$user_mail =  $user->user_email;
+
+	$wai_mails_events = get_option('wai_dynamic_mails_content');
+	$event_mail_content = $wai_mails_events['downline_commission'];
+
+	$subject = 'Downline Commission Referral';
+	// set dynamic tags values
+	$message = str_replace( '{*display_name*}', $display_name, $event_mail_content );
+	$message = str_replace( '{*amount*}', wai_number_with_currency($amount), $message );
+
+	$headers = wai_mail_header_filter();
+	$message = wai_mail_content_filter($message);
+	$subject = wai_mail_subject_filter($subject);
+
+	if($user_mail && $subject && $message && $headers){
+		$mail_sent = mail($user_mail, $subject, $message, $headers);
+	}
+
+	return $mail_sent;
 }

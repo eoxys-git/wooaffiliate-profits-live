@@ -33,14 +33,34 @@ function send_profit_to_users(){
         $profit_date = date('Y-m-d H:i:s'); 
     }
 
+    $wai_settings = get_option('wai_settings');
+    $is_hold_profit_enable = $wai_settings['is_hold_profit_enable'];
+    
+    $is_check_hold_account = false;
+    if($is_hold_profit_enable == 'on') {
+        $is_check_hold_account = true;
+    }
+
     $success_user_id = [];
     $success_funds = [];
+    $account_on_hold = [];
 
     $add_funds_users = array_filter(array_column($users_data,'users_invest_amount'));
 
     foreach ($users_data as $ud_key => $us_value) {
 
         $user_id = (int)$us_value['user_id'];
+
+        $profit_account_subsciption_status =  get_user_meta($user_id,'profit_account_subsciption_status',true);
+        $profit_account_status = get_user_meta($user_id,'profit_account_status',true);
+
+        if($is_check_hold_account == true){            
+            if($profit_account_status == 'on-hold' || $profit_account_subsciption_status == 'on-hold'){
+                $account_on_hold[] = $user_id; 
+                continue;
+            }
+        }
+        
         $current_data = [];
         $current_data[$ud_key] = $us_value;
         $current_data[$ud_key]['profit_loss_pre'] = $profit_loss_pre;
@@ -75,6 +95,8 @@ function send_profit_to_users(){
         echo json_encode(array('status'=>true,'message'=>'Profit/Funds sent successfully'));
     }elseif($add_funds_users == true && count($success_funds) == count($add_funds_users)){
         echo json_encode(array('status'=>true,'message'=>'Profit/Funds sent successfully'));
+    }elseif($success_funds && $account_on_hold){
+        echo json_encode(array('status'=>false,'message'=>'Profit/Funds sent successfully. But few accounts on-hold'));
     }else{
         echo json_encode(array('status'=>false,'message'=>'Profit/Funds not sent to all investor'));
     }

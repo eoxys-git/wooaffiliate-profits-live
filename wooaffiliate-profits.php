@@ -92,6 +92,7 @@ require_once WAP_PLUGIN_DIR.'admin/class-withdrawal-requests-list.php';
 require_once WAP_PLUGIN_DIR.'admin/class-user-funds-transactions.php';
 require_once WAP_PLUGIN_DIR.'admin/class-member-summary.php';
 require_once WAP_PLUGIN_DIR.'admin/class-schedule-emails.php';
+require_once WAP_PLUGIN_DIR.'admin/class-affiliate-memberships-list.php';
 
 require_once WAP_PLUGIN_DIR.'admin/affiliate-wp/wai-class-list-table.php';
 
@@ -305,6 +306,10 @@ function wooaffiliate_admin_menus(){
 	$wai_schedule_hook = add_menu_page( 'Schedule Email','Schedule Email','manage_options', 'affiliate-schedule-email','affiliate_schedule_emails','dashicons-chart-area',50);
     $wai_fronline_commission = add_menu_page( 'Affiliate Commission','Affiliate Commission','manage_options', 'affiliate-frontline-commission','affiliate_frontline_commission','dashicons-chart-area',50);
 	$wai_funded_trader_table_hook = add_menu_page( 'Funded Trader','Funded Trader','manage_options', 'funded-trader-management','funded_trader_management','dashicons-chart-area',50);
+    $wai_affiliate_memberships = add_menu_page( 'Affiliate Memberships','Affiliate Memberships','manage_options', 'affiliate-memberships','affiliate_memberships','dashicons-chart-area',50);
+
+    // Sub Pages
+
     $wai_invest_transactions_callback = add_submenu_page( 'affiliate-invest-management', 'Invest Transactions', 'Invest Transactions','manage_options', 'invest-transactions','wai_invest_transactions_callback');
     $wai_funds_transactions_callback = add_submenu_page( 'affiliate-invest-management', 'Funds Transactions', 'Funds Transactions','manage_options', 'funds-transactions','wai_funds_transactions_callback');
     $withdrawal_requests_list = add_submenu_page( 'affiliate-invest-management', 'Withdrawal Request', 'Withdrawal Request','manage_options', 'withdrawal-requests-list','withdrawal_requests_list');
@@ -316,12 +321,12 @@ function wooaffiliate_admin_menus(){
     $wai_funded_trader_account_hook = add_submenu_page( 'funded-trader-management', 'Funded Trader Account', 'Funded Trader Account','manage_options', 'funded-trader-accounts','funded_trader_accounts_management');
     $wai_funded_trader_account_summary_hook = add_submenu_page( 'funded-trader-management', 'Funded Trader Account Summary', 'Funded Trader Account Summary','manage_options', 'funded-trader-accounts-summary','funded_trader_accounts_management_summary');
 	
-	
 	// add_submenu_page( 'affiliate-invest-management','Withdrawal Request','Withdrawal Request', 'manage_option', 'withdrawal-requests');
     add_action( 'load-' . $wai_table_hook, 'wai_list_table_screen_options' );
     add_action( 'load-' . $wai_fronline_commission, 'wai_fronline_commission_screen_options' );
     add_action( 'load-' . $wai_schedule_hook, 'wai_schedule_emails_table_screen_options' );
     add_action( 'load-' . $wai_funded_trader_table_hook, 'wai_funded_trader_screen_options' );
+    add_action( 'load-' . $wai_affiliate_memberships, 'wai_affiliate_memberships_screen_options' );
     add_action( 'load-' . $wai_funded_trader_account_hook, 'wai_funded_trader_screen_options' );
     add_action( 'load-' . $wai_funded_trader_account_summary_hook, 'wai_funded_trader_screen_options' );
     add_action( 'load-' . $wai_invest_transactions_callback, 'wai_invest_transactions_callback_screen_options' );
@@ -366,6 +371,16 @@ function wai_funded_trader_screen_options() {
         'label'   => __( 'Members Per Page', 'wooaffiliate' ),
         'default' => 10,
         'option'  => 'wai_funded_trader_per_page',
+    );
+    add_screen_option( 'per_page', $arguments );
+}
+
+function wai_affiliate_memberships_screen_options() {
+    global $investor_list_table;
+    $arguments = array(
+        'label'   => __( 'Members Per Page', 'wooaffiliate' ),
+        'default' => 10,
+        'option'  => 'wai_affiliate_memberships_per_page',
     );
     add_screen_option( 'per_page', $arguments );
 }
@@ -777,6 +792,43 @@ function funded_trader_management(){
                     }
                 }
             </script>
+            <style>
+                input#user_id{
+                    margin-left: 8px;
+                }
+            </style>
+        </div>
+    </div>
+    <?php
+}
+
+
+/**
+ * 
+ * Plugin affiliate memberships 
+ * @since 0.0.2
+ * */
+
+function affiliate_memberships(){
+    ?>
+    <style>
+        form.submit_trader_data {
+            float: right;
+            display: flex;
+        }
+    </style>
+    <div class="wai_container" style="width:98%;margin: auto;">
+        <div class="wai_outer">            
+            <div class="wap_heading">
+                <h2><?php echo __('Memberships List'); ?></h2>
+            </div>
+            <div class="wap_content">
+                <div class="affiliate_memberships_list_table">
+                    <?php 
+                        new Affiliate_memberships_list();
+                    ?>
+                </div>
+            </div>
             <style>
                 input#user_id{
                     margin-left: 8px;
@@ -1241,6 +1293,13 @@ function wai_settings_callback(){
                         <form class="wai-settings" id="wai-settings" method="post" action="/wp-admin/admin.php?page=wai-settings">
                             <div class="form-field">
                                 <div class="default_settings">
+                                    <div class="form-row" style="justify-content: flex-start;">
+                                        <label class="form-label-control" for="is_hold_profit_enable">
+                                            <?php echo __('Membership upgrade Reminder and Hold Profits'); ?>
+                                        </label>
+                                        <input style="flex: 0 auto;margin-left: 5%;" type="checkbox" name="wai_settings[is_hold_profit_enable]" id="is_hold_profit_enable" value="<?php echo $wai_settings['is_hold_profit_enable']; ?>" <?php echo $wai_settings['is_hold_profit_enable']?'checked="checked"':''?>>
+                                    </div>
+                                    <br>
                                     <div class="form-row">
                                         <label class="form-label-control" for="admin_mail">
                                             <?php echo __('Admin mail'); ?>
@@ -1583,6 +1642,9 @@ function wai_settings_callback(){
                                         <select class="wai_mails_events" id="wai_mails_events" name="wai_mails_events">
                                             <option value="">Select Mails</option>
                                             <option <?php echo ($_GET['mail_event'] == 'ev_trading_to_patrading')?'selected':''; ?> value="ev_trading_to_patrading">EV Trading to PA Trading</option>
+                                            <option <?php echo ($_GET['mail_event'] == 'level_upgrade_now')?'selected':''; ?> value="level_upgrade_now">Level upgrade now</option>
+                                            <option <?php echo ($_GET['mail_event'] == 'level_upgrade_soon')?'selected':''; ?> value="level_upgrade_soon">Level upgrade soon</option>
+                                            <option <?php echo ($_GET['mail_event'] == 'downline_commission')?'selected':''; ?> value="downline_commission">Downline Commission</option>
                                         </select>
                                         <span class="pre_symbol"><strong><img src="/wp-content/plugins/wooaffiliate-profits/assets/images/loading-gif.gif"></strong></span>
                                     </div>
@@ -1604,7 +1666,10 @@ function wai_settings_callback(){
                                         <div class="reference-tags">
                                             <p>{*user_id*} - The display ID of the User</p>
                                             <p>{*display_name*} - The display display name of the User</p>
+                                            <p><strong>Below tags are for Funder Trading mails only</strong></p>
                                             <p>{*account_no*} - The display user account id</p>
+                                            <p><strong>Below tags are for Downline Commission mail only</strong></p>
+                                            <p>{*amount*} - Display the amount of referral</p>
                                         </div>
                                         <div>
                                             <input type="submit" name="save_wai_mail_content" class="button button-primary save_wai_mail_content" value="Save" id="save_wai_mail_content">
@@ -1619,6 +1684,15 @@ function wai_settings_callback(){
         </div>
         <script>
             jQuery(document).ready(function(){
+
+                jQuery(document).on('change','input#is_hold_profit_enable',function(){
+                    if(jQuery(this).is(":checked")){
+                        jQuery(this).val('on');
+                    }else{
+                        jQuery(this).val('');
+                    }
+                });
+
                 jQuery(document).on('click','.wai_tab-headings .tab-head-title',function(){
                     jQuery('.wai_tab-headings .tab-head-title').removeClass('active');
                     jQuery(this).addClass('active');

@@ -300,6 +300,20 @@ function wai_pmpro_after_checkout($user_id){
 	}
 }
 
+// Is level upgraded
+function is_crowdfund_upgrade($user_id,$upgrading_level_id){
+    $user_active_ids = active_levels_ids($user_id);
+    $crowdfund_levels = [1,2,3];
+
+    $is_upgrading = false;
+    foreach ($user_active_ids as $uai_key => $level_id) {
+        if(in_array($level_id,$crowdfund_levels) && $upgrading_level_id > $level_id){
+            $is_upgrading = true;
+        }
+    }
+    return $is_upgrading;
+}
+
 //Update Upcoming Level Subscription Date
 add_action('pmpro_after_checkout','wai_pmpro_update_subscription_date');
 function wai_pmpro_update_subscription_date($user_id){
@@ -338,6 +352,10 @@ function wai_pmpro_update_subscription_date($user_id){
 			continue;
 		}
 
+		if(is_crowdfund_upgrade($user_id,$level_id)){
+			update_user_meta($user_id,'profit_account_status','');
+		}
+
 		send_parents_commission($wcl_value,$user_id,$reference_id);
 
 		$user_level = pmpro_getSpecificMembershipLevelForUser( $user_id, $level_id );
@@ -369,17 +387,51 @@ function wai_pmpro_update_subscription_date($user_id){
 	}
 }
 
-// add_filter('affwp_mlm_calc_referral_amount','wai_affwp_mlm_calc_referral_amount',10,3);
-function wai_affwp_mlm_calc_referral_amount($referral_amount, $amount, $parent_affiliate_id, $reference, $rate, $product_id, $type, $level_count){
-	return $parent_affiliate_id;
-}
-
 // Subscription payment hook call
-// add_action('pmpro_subscription_payment_completed','wai_pmpro_subscription_payment_completed');
+add_action('pmpro_subscription_payment_completed','wai_pmpro_subscription_payment_completed');
 function wai_pmpro_subscription_payment_completed($morder){
-	if(!$morder) return;
-	$recurring_amount = $morder->total;
-	if(!$recurring_amount) return;
-	$user_id = get_current_user_id();
-	send_levels_recurring_commission($recurring_amount, $user_id);
+	
+	if($morder) {
+		
+		$order_id = $morder->id;
+
+		$recurring_amount = $morder->total;
+		$user_id = $morder->user_id;
+
+		update_option('subscription_payment_error_morder',$morder);
+		
+		if(!$morder->total){
+			update_option('subscription_payment_recurring_amount','amount not found');
+		}else{
+			update_option('subscription_payment_recurring_amount',$morder->total);
+		}
+
+		if(!$morder->user_id){
+			update_option('subscription_payment_user_id','user_id not found');
+		}else{
+			update_option('subscription_payment_user_id',$morder->user_id);
+		}
+
+		if($user_id && $recurring_amount && $order_id){
+			update_user_meta($user_id,'profit_account_subsciption_status','active');
+			send_levels_recurring_commission($recurring_amount, $user_id,$order_id);
+		}
+
+	}
+	
 } 
+
+// Cancle membership if subscription payment failed
+function wai_pmpro_subscription_payment_failed($order){
+	if(!$order) return;
+
+	if(!$order->membership_id || !$order->user_id) return;
+
+	$user_id = $order->user_id;
+	$membership_id = $old_order->membership_id;
+
+	//cancel the membership
+	update_user_meta($user_id,'profit_account_subsciption_status','on-hold');
+	pmpro_changeMembershipLevel($membership_id, $user_id);		
+}
+add_action("pmpro_subscription_payment_failed", "wai_pmpro_subscription_payment_failed");
