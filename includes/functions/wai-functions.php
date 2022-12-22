@@ -728,3 +728,47 @@ function add_funds_capability($user_id){
 
     return array("can_add_amount" => $can_add_amount,"amount" => $amount);
 }
+
+// Check user Profit/loss capability
+function add_profit_loss_capability($user_id){
+
+    $invest_last_entry = get_wai_invest_last_entry($user_id)[0];
+    $last_user_amount = $invest_last_entry['user_amount'];
+    $last_invest_amount = $invest_last_entry['invest_amount'];
+    $total_bank_value = $last_user_amount;
+    if($last_invest_amount){
+        $total_bank_value = $total_bank_value+$last_invest_amount;
+    }
+
+    $total_bank_value = (int)$total_bank_value;
+
+    $status = true;
+    $message = '';
+
+    $affiliate_levles_ids = active_levels_ids($user_id);
+    if(in_array(3,$affiliate_levles_ids) || in_array(16,$affiliate_levles_ids)){
+        $status = true;
+        $message = '';
+    }elseif(in_array(2,$affiliate_levles_ids) || in_array(15,$affiliate_levles_ids)){
+        if($total_bank_value >= 2500 ){
+            $status = false;
+            $message = 'upgrade_now';
+        }elseif($total_bank_value >= 2300 && $total_bank_value <= 2499){
+            $status = false;
+            $message = 'upgrade_soon';
+        }
+    }elseif(in_array(1,$affiliate_levles_ids) || in_array(14,$affiliate_levles_ids)){
+        if($total_bank_value >= 1000 ){
+            $status = false;
+            $message = 'upgrade_now';
+        }elseif($total_bank_value >= 900 && $total_bank_value <= 999){
+            $status = false;
+            $message = 'upgrade_soon';
+        }
+    }else{
+        $status = false;
+        $message = 'invalid_member';        
+    }
+
+    return array("status" => $status,"message" => $message);
+}
