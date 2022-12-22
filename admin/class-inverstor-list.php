@@ -28,6 +28,7 @@ class Investor_list_table extends WP_List_Table {
             'initial_payment'        => __( 'Initial payment', 'wooaffiliate' ),
             // 'billing_amount'        => __( 'Billing amount', 'wooaffiliate' ),
             'fee'        => __( 'Total amount', 'wooaffiliate' ),
+            'status'        => __( 'Account Status', 'wooaffiliate' ),
             'upcoming_funds'        => __( 'Upcoming Funds', 'wooaffiliate' ),
             'uncleared_funds'        => __( 'Uncleared Funds', 'wooaffiliate' ),
             'membership_id'        => __( 'Level ID', 'wooaffiliate' ),
@@ -257,6 +258,17 @@ class Investor_list_table extends WP_List_Table {
             }
         }
 
+        $account_upgrade_status = get_user_meta($user_id,'profit_account_status',true);
+        $profit_account_subsciption_status =  get_user_meta($user_id,'profit_account_subsciption_status',true);
+
+        $account_status = 'Active';
+        if($profit_account_subsciption_status == 'on-hold' && $account_upgrade_status == 'on-hold'){
+            $account_status = 'on hold upgrade and subscription';
+        }elseif($account_upgrade_status == 'on-hold'){
+            $account_status = 'on hold upgrade';
+        }elseif($profit_account_subsciption_status == 'on-hold'){
+            $account_status = 'on hold subscription';
+        }
         // $bank_value = $bank_value??default_invest_amount();
 
         switch($column_name) {
@@ -277,6 +289,9 @@ class Investor_list_table extends WP_List_Table {
             break;
             case 'fee':
             return wai_number_with_currency($bank_value);
+            break;
+            case 'status':
+            return ucfirst($account_status);
             break;
             case 'upcoming_funds':
             // echo "<pre>";
